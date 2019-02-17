@@ -234,6 +234,32 @@ exports.getStats = functions.https.onRequest((req, res)=> {
         message:"something went wrong"
       })
     })
+    })
+  })
+
+  exports.updatebankRecord = functions.https.onRequest((req, res)=>{
+    return cors(req, res, ()=> {
+      if(req.method !== 'PUT'){
+        return res.status(401).json({
+          message: 'Not allowed'
+        })
+      }
+      const dbase = admin.database().ref("capacity");
+      dbase.on('value', (snapshot)=>{
+        snapshot.forEach((user)=>{
+          if(req.body.bankname === user.val().bankName){
+            user.val().on = req.body.on,
+            user.val().op = req.body.op,
+            user.val().an = req.body.an,
+            user.val().ap = req.body.ap,
+            user.val().abn = req.body.abn,
+            user.val().abp = req.body.abp,
+            user.val().bn = req.body.bn,
+            user.val().bp = req.body.bp
+          }
+        })
+        res.status(200).send();
+      })
 
     })
   })
