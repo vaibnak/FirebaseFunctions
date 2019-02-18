@@ -61,7 +61,8 @@ exports.testingadduser = functions.https.onRequest((req, res)=> {
         latitude: req.body.latitude,
         longitude: req.body.longitude,
         bloodGroup: req.body.bloodGroup,
-        address: req.body.address
+        address: req.body.address,
+        password: req.body.password
     });
 
     let users = [];
@@ -212,30 +213,7 @@ exports.getStats = functions.https.onRequest((req, res)=> {
 
   })
 
-  exports.getfcmtoken = functions.https.onRequest((req, res)=>{
-    return cors(req, res, ()=> {
-      if(req.method !== 'GET'){
-        return res.status(401).json({
-          message: 'Not allowed'
-        })
-      }
-      const dbase = admin.database().ref("users/");
-      let tokens = [];
-      dbase.on('value',(snapshot)=>{
-        snapshot.forEach((user)=>{
-          tokens.push({
-            tokenId: user.val().fcmId,
-            bloodgroup: user.val().bloodGroup
-          })
-        })
-      res.status(200).json(tokens);
-    },(error)=>{
-      res.status(error.code).json({
-        message:"something went wrong"
-      })
-    })
-    })
-  })
+
 
   exports.updatebankRecord = functions.https.onRequest((req, res)=>{
     return cors(req, res, ()=> {
@@ -263,3 +241,94 @@ exports.getStats = functions.https.onRequest((req, res)=> {
 
     })
   })
+
+  exports.giveInfoee = functions.https.onRequest((req, res)=>{
+    return cors(req, res, ()=> {
+      if(req.method !== 'GET'){
+        return res.status(401).json({
+          message: 'Not allowed'
+        })
+      }
+      let test = [];
+      // console.log("reqest params .....................", req.params);
+    //   return res.status(200).json(req.query.bankName)
+      let required = [];
+      const dbase = admin.database().ref("capacity/");
+      dbase.on('value', (snapshot) => {
+        snapshot.forEach((user) => {
+          test.push(user);
+
+
+          // var b = req.params.bankName;
+          if(user.val().bankName == req.query.bankName) {
+            required.push(user.val());
+          }
+        })
+        res.status(200).json(required);
+
+      }, (error)=>{
+        res.status(error.code).json({
+          message: "something went wrong"
+        })
+      })
+    })
+  })
+
+  exports.doquery = functions.https.onRequest((req, res)=>{
+    let userref = admin.database().ref('capacity');
+    return res.status(200).json(userref);
+    let s = {}
+    userref.on('value', function(snap){
+      s = snap.val();
+    })
+  })
+
+  exports.getfcmtoken = functions.https.onRequest((req, res)=>{
+    return cors(req, res, ()=> {
+      if(req.method !== 'GET'){
+        return res.status(401).json({
+          message: 'Not allowed'
+        })
+      }
+      const dbase = admin.database().ref("users/");
+      let tokens = [];
+      dbase.on('value',(snapshot)=>{
+        snapshot.forEach((user)=>{
+          tokens.push({
+            tokenId: user.val().fcmId,
+            bloodgroup: user.val().bloodGroup
+          })
+        })
+      res.status(200).json(tokens);
+    },(error)=>{
+      res.status(error.code).json({
+        message:"something went wrong"
+      })
+    })
+    })
+  })
+
+exports.checkLogin = functions.https.onRequest((req, res)=>{
+  return cors(req, res, ()=> {
+    if(req.method !== 'POST'){
+      return res.status(401).json({
+        message: 'Not allowed'
+      })
+    }
+
+    var valid = 0;
+    const dbase = admin.database().ref("users")
+    dbase.on("value", (snapshot)=>{
+       snapshot.forEach((user)=>{
+         if((user.val().phoneNumber == req.body.phoneNumber) && (user.val().password == req.body.password)){
+           valid = 1;
+         }
+       })
+       if(valid == 1)
+       res.status(200).json();
+       else{
+         res.status(400).json(req.body.phoneNumber);
+       }
+    })
+  })
+})
